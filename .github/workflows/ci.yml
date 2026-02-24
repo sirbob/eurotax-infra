@@ -19,7 +19,6 @@ jobs:
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
-        continue-on-error: false
 
       - name: Terraform Init
         run: terraform init -backend=false
@@ -30,7 +29,7 @@ jobs:
   compose:
     name: Docker Compose Validation
     runs-on: ubuntu-latest
-    if: hashFiles('docker-compose.yml') != ''
+    if: hashFiles('docker-compose.yml', 'docker-compose.yaml', 'compose.yml', 'compose.yaml') != ''
     steps:
       - uses: actions/checkout@v4
 

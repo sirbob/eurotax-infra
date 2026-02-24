@@ -14,6 +14,8 @@ terraform.rc
 # Environment / Secrets
 .env.local
 .mcp.json
+terraform.tfvars
+*.auto.tfvars
 *.pem
 *.key
 

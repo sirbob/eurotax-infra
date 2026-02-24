@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  terraform:
+    name: Terraform Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7"
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+  compose:
+    name: Docker Compose Validation
+    runs-on: ubuntu-latest
+    if: hashFiles('docker-compose.yml', 'docker-compose.yaml', 'compose.yml', 'compose.yaml') != ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Docker Compose
+        run: docker compose config --quiet

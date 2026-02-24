@@ -1,0 +1,120 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_root_2024
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - eurotax
+
+  eurotax-mock:
+    build:
+      context: ./eurotax-mock
+      dockerfile: Dockerfile
+    container_name: eurotax-mock
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/eurotax_mock
+      SPRING_DATASOURCE_USERNAME: mock_user
+      SPRING_DATASOURCE_PASSWORD: mock_dev_pass_2024
+      SERVER_PORT: "8090"
+    ports:
+      - "8090:8090"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - eurotax
+
+  eurotax-api:
+    build:
+      context: ./eurotax-api
+      dockerfile: Dockerfile
+    container_name: eurotax-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eurotax-mock:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/eurotax_api
+      SPRING_DATASOURCE_USERNAME: api_user
+      SPRING_DATASOURCE_PASSWORD: api_dev_pass_2024
+      SERVER_PORT: "8080"
+      EUROTAX_BASE_URL: http://eurotax-mock:8090
+      EUROTAX_USERNAME: "mock_user"
+      EUROTAX_PASSWORD: "mock_pass_2024"
+      EUROTAX_HMAC_SECRET: "demo-hmac-secret-key-2024"
+      SERVICE_TOKEN: demo-service-token-2024
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - eurotax
+
+  eurotax-ui:
+    build:
+      context: ./eurotax-ui
+      dockerfile: Dockerfile
+    container_name: eurotax-ui
+    restart: unless-stopped
+    depends_on:
+      eurotax-api:
+        condition: service_healthy
+    environment:
+      APP_NAME: Eurotax
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: http://eurotax-dev-01:8000
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: eurotax_api
+      DB_USERNAME: api_user
+      DB_PASSWORD: api_dev_pass_2024
+      SPRING_API_BASE_URL: http://eurotax-api:8080
+      SERVICE_TOKEN: demo-service-token-2024
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    networks:
+      - eurotax
+
+volumes:
+  postgres_data:
+
+networks:
+  eurotax:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

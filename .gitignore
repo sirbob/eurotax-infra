@@ -13,6 +13,7 @@ terraform.rc
 
 # Environment / Secrets
 .env.local
+.mcp.json
 *.pem
 *.key
 

@@ -29,7 +29,6 @@ jobs:
   compose:
     name: Docker Compose Validation
     runs-on: ubuntu-latest
-    if: hashFiles('docker-compose.yml', 'docker-compose.yaml', 'compose.yml', 'compose.yaml') != ''
     steps:
       - uses: actions/checkout@v4
 

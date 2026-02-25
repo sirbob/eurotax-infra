@@ -169,8 +169,8 @@ COPY . .
 # Copy built frontend assets from frontend stage (overwrites public/build/)
 COPY --from=frontend /app/public/build ./public/build
 
-# Clear stale bootstrap cache (may contain dev-only provider references)
-RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
+# Remove Vite hot file (dev artifact) and stale bootstrap cache
+RUN rm -f public/hot bootstrap/cache/packages.php bootstrap/cache/services.php
 
 # Create required Laravel directories and set permissions
 RUN mkdir -p storage/framework/cache/data \

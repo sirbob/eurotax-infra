@@ -12,7 +12,7 @@ server_location = ""
 server_image    = ""
 
 # --- SSH ---
-ssh_key_name       = ""
+ssh_key_name        = ""
 ssh_public_key_path = ""
 
 # --- Firewall ---
